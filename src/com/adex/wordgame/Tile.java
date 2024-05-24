@@ -15,10 +15,16 @@ public class Tile {
     public int x;
     public int y;
 
+    public final char[] letters;
+
     public final Shape shape;
     public Rotation rotation;
 
-    public Tile(Shape shape, Rotation rotation) {
+    private int[] last_offest = {};
+
+    public Tile(char[] letters, Shape shape, Rotation rotation) {
+        this.letters = letters;
+
         this.shape = shape;
         this.rotation = rotation;
 
@@ -26,32 +32,34 @@ public class Tile {
         y = -1;
     }
 
-    public static Tile create(Shape shape, Rotation rotation) {
-        return new Tile(shape, rotation);
+    public static Tile create(char[] letters, Shape shape, Rotation rotation) {
+        return new Tile(letters, shape, rotation);
     }
 
-    public static Tile create(Shape shape) {
-        return create(shape, Rotation.NONE);
+    public static Tile create(char[] letters, Shape shape) {
+        return create(letters, shape, Rotation.NONE);
     }
 
-    public static Tile create(int shape) {
+    public static Tile create(char[] letters, int shape) {
         if (shape < 0 || shape > 6) {
             System.out.println("Invalid shape id: " + shape);
         }
 
-        return create(new Shape[]{Shape.I, Shape.J, Shape.L, Shape.S, Shape.Z, Shape.T, Shape.O}[shape]);
+        return create(letters, new Shape[]{Shape.I, Shape.J, Shape.L, Shape.S, Shape.Z, Shape.T, Shape.O}[shape]);
     }
 
     public static Tile create(Random random) {
-        return create(random.nextInt(6));
+        return create(WordList.get4Letters(random), random.nextInt(6));
     }
 
     public void rotateCounterClockwise() {
         rotation = rotation.previous;
+        last_offest = new int[0];
     }
 
     public void rotateClockwise() {
         rotation = rotation.next;
+        last_offest = new int[0];
     }
 
     public static int[] getOffSets(Shape shape, Rotation rotation) {
@@ -70,7 +78,19 @@ public class Tile {
 
 
     public int[] getOffSets() {
-        return getOffSets(shape, rotation);
+        if (last_offest.length == 0)
+            last_offest = getOffSets(shape, rotation);
+
+        return last_offest;
+    }
+
+    public boolean isIn(int x, int y) {
+        int[] offSet = getOffSets();
+        for (int i = 0; i < 8; i += 2) {
+            if (offSet[i] == x && offSet[i + 1] == y) return true;
+        }
+
+        return false;
     }
 
     public enum Shape {
