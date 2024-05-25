@@ -41,16 +41,17 @@ public class WordGame {
         return new WordGame(random, width, height);
     }
 
-    public void tick() {
+    public boolean tick() {
         if (tile == null) {
             createTile();
-            return;
+            return true;
         }
 
         if (canMoveDown()) {
             tile.y--;
+            return true;
         } else {
-            placeTile();
+            return placeTile();
         }
     }
 
@@ -65,44 +66,81 @@ public class WordGame {
         }
 
         this.tile = tile;
-        tile.y = height - 1;
+        tile.y = height + 1;
         tile.x = width / 2;
     }
 
-    public void placeTile() {
-        // add letters to board
-        int[] offsets = tile.getOffSets();
-        for (int i = 0; i < 4; i++) {
-            int x = tile.x + offsets[2 * i];
-            int y = tile.y + offsets[2 * i + 1];
-            tiles[y][x] = tile.letters[i];
+    public boolean placeTile() {
+        if (tile.y + tile.getMaxYOffset() >= height) {
+            end();
+            return false;
         }
+
+        // add letters to board
+        addTileToBoard();
 
         // add score
         score += calculateScore();
 
         tile = null; // remove tile
+        return true;
     }
 
-    public void dropDownByOne() {
+    public void end() {
+
+    }
+
+    private void addTileToBoard() {
         if (tile == null) return;
+
+        int[] offsets = tile.getOffSets();
+        for (int i = 0; i < 4; i++) {
+            int x = tile.x + offsets[2 * i];
+            int y = tile.y + offsets[2 * i + 1];
+
+            if (y >= height) continue;
+
+            tiles[y][x] = tile.letters[i];
+        }
+    }
+
+    /**
+     * Adds empty tiles to current position of the tile after they have temporarily been added.
+     */
+    private void removeTileToBoard() {
+        if (tile == null) return;
+
+        int[] offsets = tile.getOffSets();
+        for (int i = 0; i < 8; i += 2) {
+            int x = tile.x + offsets[i];
+            int y = tile.y + offsets[i + 1];
+
+            if (y >= height) continue;
+
+            tiles[y][x] = ' ';
+        }
+    }
+
+    public boolean dropDownByOne() {
+        if (tile == null) return true;
 
         if (canMoveDown()) {
             tile.y--;
+            return true;
         } else {
-            placeTile();
+            return placeTile();
         }
     }
 
-    public void dropDownFull() {
-        if (tile == null) return;
+    public boolean dropDownFull() {
+        if (tile == null) return true;
 
         if (!canMoveDown()) {
-            placeTile();
-            return;
+            return placeTile();
         }
 
         do tile.y--; while (canMoveDown());
+        return true;
     }
 
     public int calculateScore() {
@@ -252,21 +290,21 @@ public class WordGame {
         int score = 0;
 
         // First index where a valid word can start
-        int firstPossibleWordStart = Math.max(endY, tileEnd + MAX_WORD_LENGTH - 1);
+        int firstPossibleWordStart = Math.min(endY, tileEnd + MAX_WORD_LENGTH - 1);
         // Last index where a valid word can start
-        int lastPossibleStart = Math.min(tileStart, startY + MIN_WORD_LENGTH - 1);
+        int lastPossibleStart = Math.max(tileStart, startY + MIN_WORD_LENGTH - 1);
 
         for (int start = firstPossibleWordStart; start >= lastPossibleStart; start--) {
             String word = "";
 
             // Index at which the words contain a letter from the current tile and is long enough
-            int firstPossibleStart = Math.max(tileStart, start - MIN_WORD_LENGTH + 1);
+            int firstPossibleStart = Math.min(tileStart, start - MIN_WORD_LENGTH + 1);
             for (int i = start; i > firstPossibleStart - 1; i--) {
                 word += tiles[i][x];
             }
 
             // Last index where a valid word can reach
-            int lastPossibleEnd = Math.min(startY, start - MAX_WORD_LENGTH + 1);
+            int lastPossibleEnd = Math.max(startY, start - MAX_WORD_LENGTH + 1);
             for (int end = firstPossibleStart; end >= lastPossibleEnd; end--) {
                 word += tiles[end][x];
                 score += WordList.getScore(word);
@@ -282,7 +320,9 @@ public class WordGame {
             int x = tile.x + coords[i];
             int y = tile.y + coords[i + 1];
 
-            if (tiles[y][x] != ' ') return false;
+            if (y > height) continue;
+
+            if (y < 1 || tiles[y - 1][x] != ' ') return false;
         }
 
         return true;
@@ -341,6 +381,8 @@ public class WordGame {
 
     @Override
     public String toString() {
+        addTileToBoard(); // Adding tiles temporarily to the board for quicker formatting
+
         StringBuilder sb = new StringBuilder();
         boolean newLine = false;
 
@@ -350,11 +392,16 @@ public class WordGame {
             }
             newLine = true;
 
+            sb.append('|');
             for (char c : tiles[y]) {
                 sb.append(c);
             }
+            sb.append('|');
         }
 
+        sb.append('\n').append((char) 0).append("—".repeat(width)).append((char) 0);
+
+        removeTileToBoard();
         return sb.toString();
     }
 }

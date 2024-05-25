@@ -14,7 +14,7 @@ public class WordList {
     }
 
     public static char getLetter(Random random) {
-        return 'A';
+        return (char) ('A' + random.nextInt(26));
     }
 
     public static int getScore(String word) {

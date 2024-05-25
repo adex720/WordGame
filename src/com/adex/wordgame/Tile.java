@@ -84,6 +84,16 @@ public class Tile {
         return last_offest;
     }
 
+    public int getMaxYOffset() {
+        int[] offsets = getOffSets();
+        int maxYOffset = 0;
+        for (int i = 1; i < 8; i += 2) {
+            if (offsets[i] > maxYOffset) maxYOffset = offsets[i];
+        }
+
+        return maxYOffset;
+    }
+
     public boolean isIn(int x, int y) {
         int[] offSet = getOffSets();
         for (int i = 0; i < 8; i += 2) {
