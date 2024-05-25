@@ -82,17 +82,40 @@ public class WordGame {
         return score;
     }
 
-    public int calculateRowScore(int y, int startX, int endX) {
+    /**
+     * Calculates the score the tile gets on the row.
+     * Words must be from left to right.
+     * Loops trough each possible word position to check the score.
+     * <p>
+     * O(n^2)
+     *
+     * @param y         Y coordinate of the row
+     * @param startX    Smallest x coordinate of adjacent tiles on the row to the left of the tile
+     * @param endX      Largest x coordinate of adjacent tiles on the row to the right of the tile
+     * @param tileStart Smallest x coordinate of the tile on the row
+     * @param tileEnd   Largest x coordinate of the tile on the row
+     * @return score of the row
+     */
+    public int calculateRowScore(int y, int startX, int endX, int tileStart, int tileEnd) {
         int score = 0;
 
-        for (int start = startX; start <= endX - MIN_WORD_LENGTH; start++) {
+        // First index where a valid word can start
+        int firstPossibleWordStart = Math.max(startX, tileStart - MAX_WORD_LENGTH + 1);
+        // Last index where a valid word can start
+        int lastPossibleStart = Math.min(tileEnd, endX - MIN_WORD_LENGTH + 1);
+
+        for (int start = firstPossibleWordStart; start <= lastPossibleStart; start++) {
             String word = "";
 
-            for (int i = 0; i < MIN_WORD_LENGTH - 1; i++) {
-                word += tiles[y][start + i];
+            // Index at which the words contain a letter from the current tile and is long enough
+            int firstPossibleStart = Math.max(tileStart, start + MIN_WORD_LENGTH - 1);
+            for (int i = start; i < firstPossibleStart; i++) {
+                word += tiles[y][i];
             }
 
-            for (int end = start + MIN_WORD_LENGTH - 1; end <= Math.min(endX, start + MAX_WORD_LENGTH - 1); end++) { // TODO: clean up
+            // Last index where a valid word can reach
+            int lastPossibleEnd = Math.min(endX, start + MAX_WORD_LENGTH - 1);
+            for (int end = firstPossibleStart; end <= lastPossibleEnd; end++) {
                 word += tiles[y][end];
                 score += WordList.getScore(word);
             }
@@ -101,18 +124,40 @@ public class WordGame {
         return score;
     }
 
-    public int calculateColumnScore(int x, int startY, int endY) {
+    /**
+     * Calculates the score the tile gets on the column.
+     * Words must be from up to down.
+     * Loops trough each possible word position to check the score.
+     * <p>
+     * O(n^2)
+     *
+     * @param x         X coordinate of the column
+     * @param startY    Smallest y coordinate of adjacent tiles on the column below the tile
+     * @param endY      Largest y coordinate of adjacent tiles on the column above the tile
+     * @param tileStart Smallest y coordinate of the tile on the column
+     * @param tileEnd   Largest y coordinate of the tile on the column
+     * @return score of the row
+     */
+    public int calculateColumnScore(int x, int startY, int endY, int tileStart, int tileEnd) {
         int score = 0;
 
-        for (int start = startY; start >= endY - MIN_WORD_LENGTH; start--) {
+        // First index where a valid word can start
+        int firstPossibleWordStart = Math.max(endY, tileEnd + MAX_WORD_LENGTH - 1);
+        // Last index where a valid word can start
+        int lastPossibleStart = Math.min(tileStart, startY + MIN_WORD_LENGTH - 1);
+
+        for (int start = firstPossibleWordStart; start >= lastPossibleStart; start--) {
             String word = "";
 
-            for (int i = 0; i < MIN_WORD_LENGTH - 1; i++) {
-                word += tiles[start - i][x];
+            // Index at which the words contain a letter from the current tile and is long enough
+            int firstPossibleStart = Math.max(tileStart, start - MIN_WORD_LENGTH + 1);
+            for (int i = start; i > firstPossibleStart - 1; i--) {
+                word += tiles[i][x];
             }
 
-            //TODO: limit scoring inside current tile
-            for (int end = start - MIN_WORD_LENGTH + 1; end >= Math.max(endY, start - MAX_WORD_LENGTH + 1); end--) { // TODO: clean up
+            // Last index where a valid word can reach
+            int lastPossibleEnd = Math.min(startY, start - MAX_WORD_LENGTH + 1);
+            for (int end = firstPossibleStart; end >= lastPossibleEnd; end--) {
                 word += tiles[end][x];
                 score += WordList.getScore(word);
             }
