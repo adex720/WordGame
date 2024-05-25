@@ -66,7 +66,7 @@ public class WordGame {
         }
 
         this.tile = tile;
-        tile.y = height + 1;
+        tile.y = height + 1; // TODO: decrease by 1 and check validness on spawn
         tile.x = width / 2;
     }
 
@@ -377,6 +377,48 @@ public class WordGame {
 
             if (x >= width) return false; // already at right border
             if (y >= height) continue; // not yet in board
+
+            if (tiles[y][x] != ' ') return false; // tile occupied
+        }
+
+        return true;
+    }
+
+    public void rotateClockwise() {
+        if (canMoveClockwise()) tile.rotateClockwise();
+    }
+
+    public boolean canMoveClockwise() {
+        if (tile == null) return false;
+
+        int[] offsets = Tile.getOffSets(tile.shape, tile.getClockwiseRotation());
+        for (int i = 0; i < 8; i += 2) {
+            int x = tile.x + offsets[i];
+            int y = tile.y + offsets[i + 1];
+
+            if (x >= width || x < 0 || y < 0) return false; // outside board
+            if (y >= height) continue; // not in board
+
+            if (tiles[y][x] != ' ') return false; // tile occupied
+        }
+
+        return true;
+    }
+
+    public void rotateCounterClockwise() {
+        if (canMoveCounterClockwise()) tile.rotateCounterClockwise();
+    }
+
+    public boolean canMoveCounterClockwise() {
+        if (tile == null) return false;
+
+        int[] offsets = Tile.getOffSets(tile.shape, tile.getCounterClockwiseRotation());
+        for (int i = 0; i < 8; i += 2) {
+            int x = tile.x + offsets[i];
+            int y = tile.y + offsets[i + 1];
+
+            if (x >= width || x < 0 || y < 0) return false; // outside board
+            if (y >= height) continue; // not in board
 
             if (tiles[y][x] != ' ') return false; // tile occupied
         }

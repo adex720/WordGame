@@ -17,6 +17,8 @@ public class Main {
             if (!in.isEmpty()) switch (in.charAt(0)) {
                 case 'a' -> game.moveLeft();
                 case 'd' -> game.moveRight();
+                case 'e' -> game.rotateClockwise();
+                case 'q' -> game.rotateCounterClockwise();
                 case 's' -> {if (!game.dropDownByOne()) break loop;}
                 case 'x' -> {if (!game.dropDownFull()) break loop;}
             }

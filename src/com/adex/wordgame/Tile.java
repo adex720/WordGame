@@ -63,7 +63,7 @@ public class Tile {
     }
 
     public static int[] getOffSets(Shape shape, Rotation rotation) {
-        int id = rotation == Rotation.NONE ? 1 : rotation == Rotation.RIGHT ? 2 : rotation == Rotation.HALF ? 3 : 4;
+        int id = rotation == Rotation.NONE ? 0 : rotation == Rotation.RIGHT ? 1 : rotation == Rotation.HALF ? 2 : 3;
 
         return switch (shape) {
             case I -> OFFSET_I[id];
@@ -92,6 +92,14 @@ public class Tile {
         }
 
         return maxYOffset;
+    }
+
+    public Rotation getClockwiseRotation() {
+        return rotation.next;
+    }
+
+    public Rotation getCounterClockwiseRotation() {
+        return rotation.previous;
     }
 
     public boolean isIn(int x, int y) {
