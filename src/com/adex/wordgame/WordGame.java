@@ -1,11 +1,14 @@
 package com.adex.wordgame;
 
 import java.util.Arrays;
+import java.util.Random;
 
 public class WordGame {
 
     public static final int MIN_WORD_LENGTH = 4;
     public static final int MAX_WORD_LENGTH = 9;
+
+    private final Random random;
 
     private int width;
     private int height;
@@ -15,7 +18,8 @@ public class WordGame {
     private char[][] tiles;
     private Tile tile;
 
-    private WordGame(int width, int height) {
+    private WordGame(Random random, int width, int height) {
+        this.random = random;
         this.height = height;
         this.width = width;
 
@@ -29,20 +33,29 @@ public class WordGame {
         tile = null;
     }
 
-    public static WordGame create() {
-        return create(12, 10);
+    public static WordGame create(Random random) {
+        return create(12, 10, random);
     }
 
-    public static WordGame create(int width, int height) {
-        return new WordGame(width, height);
+    public static WordGame create(int width, int height, Random random) {
+        return new WordGame(random, width, height);
     }
 
     public void tick() {
+        if (tile == null) {
+            createTile();
+            return;
+        }
+
         if (canMoveDown()) {
             tile.y--;
         } else {
-            score += calculateScore();
+            placeTile();
         }
+    }
+
+    public void createTile() {
+        addTile(Tile.create(random));
     }
 
     public void addTile(Tile tile) {
@@ -56,9 +69,46 @@ public class WordGame {
         tile.x = width / 2;
     }
 
+    public void placeTile() {
+        // add letters to board
+        int[] offsets = tile.getOffSets();
+        for (int i = 0; i < 4; i++) {
+            int x = tile.x + offsets[2 * i];
+            int y = tile.y + offsets[2 * i + 1];
+            tiles[y][x] = tile.letters[i];
+        }
+
+        // add score
+        score += calculateScore();
+
+        tile = null; // remove tile
+    }
+
+    public void dropDownByOne() {
+        if (tile == null) return;
+
+        if (canMoveDown()) {
+            tile.y--;
+        } else {
+            placeTile();
+        }
+    }
+
+    public void dropDownFull() {
+        if (tile == null) return;
+
+        if (!canMoveDown()) {
+            placeTile();
+            return;
+        }
+
+        do tile.y--; while (canMoveDown());
+    }
+
     public int calculateScore() {
         if (tile == null) return 0;
 
+        // Find min and max offsets of the tile
         int minX = 0;
         int minY = 0;
         int maxX = 0;
@@ -69,21 +119,80 @@ public class WordGame {
             int x = offsets[i];
             int y = offsets[i + 1];
 
-            if (x > minX) minX = x;
-            if (x < maxX) maxX = x;
-            if (y > minY) minY = y;
-            if (y < maxY) maxY = y;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
         }
+
+        // Change offset to coordinate
+        minX += tile.x;
+        maxX += tile.x;
+        minY += tile.y;
+        maxY += tile.y;
 
         int score = 0;
 
+        // calculate score of each column
+        for (int x = minX; x <= maxX; x++) {
 
-        tile = null;
+            // Find min and max of the tile in current column
+            int tileStart = maxY;
+            int tileEnd = minY;
+
+            for (int i = 0; i < 8; i += 2) {
+                int x2 = tile.x + offsets[i];
+                int y2 = tile.y + offsets[i + 1];
+
+                if (x2 != x) continue;
+
+                if (y2 < tileStart) tileStart = y2;
+                if (y2 > tileEnd) tileEnd = y2;
+            }
+
+            // Find mix and max of adjacent tiles in the current column
+            int startY = tileStart;
+            while (startY > 0 && tiles[startY - 1][x] != ' ') startY--;
+            int endY = tileEnd;
+            while (endY < height - 1 && tiles[startY + 1][x] != ' ') endY++;
+
+            // Add score
+            score += calculateColumnScore(x, startY, endY, tileStart, tileEnd);
+        }
+
+        // calculate score of each row
+        for (int y = minY; y <= maxY; y++) {
+
+            // Find min and max of the tile in current row
+            int tileStart = maxX;
+            int tileEnd = minX;
+
+            for (int i = 0; i < 8; i += 2) {
+                int x2 = tile.x + offsets[i];
+                int y2 = tile.y + offsets[i + 1];
+
+                if (y2 != y) continue;
+
+                if (x2 < tileStart) tileStart = x2;
+                if (x2 > tileEnd) tileEnd = x2;
+            }
+
+            // Find mix and max of adjacent tiles in the current column
+            int startX = tileStart;
+            while (startX > 0 && tiles[y][startX - 1] != ' ') startX--;
+            int endX = tileEnd;
+            while (endX < width - 1 && tiles[y][endX + 1] != ' ') endX++;
+
+            // Add score
+            score += calculateRowScore(y, startX, endX, tileStart, tileEnd);
+        }
+
         return score;
     }
 
     /**
      * Calculates the score the tile gets on the row.
+     * Letters must be added to {@link this.tiles} beforehand.
      * Words must be from left to right.
      * Loops trough each possible word position to check the score.
      * <p>
@@ -126,6 +235,7 @@ public class WordGame {
 
     /**
      * Calculates the score the tile gets on the column.
+     * Letters must be added to {@link this.tiles} beforehand.
      * Words must be from up to down.
      * Loops trough each possible word position to check the score.
      * <p>
@@ -169,8 +279,8 @@ public class WordGame {
     public boolean canMoveDown() {
         int[] coords = tile.getOffSets();
         for (int i = 0; i < 8; i += 2) {
-            int x = coords[i];
-            int y = coords[i + 1];
+            int x = tile.x + coords[i];
+            int y = tile.y + coords[i + 1];
 
             if (tiles[y][x] != ' ') return false;
         }
