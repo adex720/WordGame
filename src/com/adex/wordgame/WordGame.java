@@ -87,7 +87,7 @@ public class WordGame {
     }
 
     public void end() {
-
+        System.out.println("Score: " + score);
     }
 
     private void addTileToBoard() {
@@ -323,6 +323,62 @@ public class WordGame {
             if (y > height) continue;
 
             if (y < 1 || tiles[y - 1][x] != ' ') return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Moves the tile one space to left
+     * Checks if the tile can move and if not, does nothing
+     */
+    public void moveLeft() {
+        if (canMoveLeft()) tile.x--;
+    }
+
+    /**
+     * Checks if the tile can move to the left
+     */
+    public boolean canMoveLeft() {
+        if (tile == null) return false;
+
+        int[] offsets = tile.getOffSets();
+        for (int i = 0; i < 8; i += 2) {
+            int x = tile.x + offsets[i] - 1;
+            int y = tile.y + offsets[i + 1];
+
+            if (x < 0) return false; // already at left border
+            if (y >= height) continue; // not yet in board
+
+            if (tiles[y][x] != ' ') return false; // tile occupied
+        }
+
+        return true;
+    }
+
+    /**
+     * Moves the tile one space to right
+     * Checks if the tile can move and if not, does nothing
+     */
+    public void moveRight() {
+        if (canMoveRight()) tile.x++;
+    }
+
+    /**
+     * Checks if the tile can move to the right
+     */
+    public boolean canMoveRight() {
+        if (tile == null) return false;
+
+        int[] offsets = tile.getOffSets();
+        for (int i = 0; i < 8; i += 2) {
+            int x = tile.x + offsets[i] + 1;
+            int y = tile.y + offsets[i + 1];
+
+            if (x >= width) return false; // already at right border
+            if (y >= height) continue; // not yet in board
+
+            if (tiles[y][x] != ' ') return false; // tile occupied
         }
 
         return true;

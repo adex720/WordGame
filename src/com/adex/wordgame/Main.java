@@ -9,15 +9,19 @@ public class Main {
         WordGame game = WordGame.create(ThreadLocalRandom.current());
 
         Scanner scanner = new Scanner(System.in);
+        loop:
         while (true) {
-            String in = scanner.nextLine();
+            System.out.println(game);
 
-            if (game.tick()) {
-                System.out.println(game);
-            } else {
-                System.out.println(game.getScore());
-                break;
+            String in = scanner.nextLine();
+            if (!in.isEmpty()) switch (in.charAt(0)) {
+                case 'a' -> game.moveLeft();
+                case 'd' -> game.moveRight();
+                case 's' -> {if (!game.dropDownByOne()) break loop;}
+                case 'x' -> {if (!game.dropDownFull()) break loop;}
             }
+
+            if (!game.tick()) break;
         }
     }
 }
