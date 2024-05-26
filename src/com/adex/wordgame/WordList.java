@@ -47,7 +47,8 @@ public class WordList {
     }
 
     public char getLetter(Random random) {
-        return (char) ('A' + random.nextInt(26));
+        return new char[]{'q', 'u', 'e'}[random.nextInt(3)];
+        //return (char) ('A' + random.nextInt(26));
     }
 
     public int getScore(String word) {

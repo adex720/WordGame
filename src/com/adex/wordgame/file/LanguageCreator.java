@@ -13,7 +13,7 @@ import java.util.Arrays;
 public class LanguageCreator {
 
     public static void main(String[] args) {
-        createLanguage("english", 1, 120);
+        createLanguage("english", 4, 12);
     }
 
     public static void createLanguage(String filename, int minLength, int maxLength) {
