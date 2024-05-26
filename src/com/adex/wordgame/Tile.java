@@ -48,8 +48,12 @@ public class Tile {
         return create(letters, new Shape[]{Shape.I, Shape.J, Shape.L, Shape.S, Shape.Z, Shape.T, Shape.O}[shape]);
     }
 
+    public static Tile create(Random random, WordList wordList) {
+        return create(wordList.get4Letters(random), random.nextInt(6));
+    }
+
     public static Tile create(Random random) {
-        return create(WordList.get4Letters(random), random.nextInt(6));
+        return create(random, WordList.defaultLanguage());
     }
 
     public void rotateCounterClockwise() {

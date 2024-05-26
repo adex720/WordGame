@@ -8,7 +8,11 @@ public class WordGame {
     public static final int MIN_WORD_LENGTH = 4;
     public static final int MAX_WORD_LENGTH = 9;
 
+    public static final int DEFAULT_GAME_WIDTH = 12;
+    public static final int DEFAULT_GAME_HEIGHT = 10;
+
     private final Random random;
+    private final WordList wordList;
 
     private int width;
     private int height;
@@ -18,8 +22,9 @@ public class WordGame {
     private char[][] tiles;
     private Tile tile;
 
-    private WordGame(Random random, int width, int height) {
+    private WordGame(Random random, WordList wordList, int width, int height) {
         this.random = random;
+        this.wordList = wordList;
         this.height = height;
         this.width = width;
 
@@ -33,12 +38,20 @@ public class WordGame {
         tile = null;
     }
 
-    public static WordGame create(Random random) {
-        return create(12, 10, random);
+    public static WordGame create(Random random, WordList wordList) {
+        return create(DEFAULT_GAME_WIDTH, DEFAULT_GAME_HEIGHT, random, wordList);
     }
 
-    public static WordGame create(int width, int height, Random random) {
-        return new WordGame(random, width, height);
+    public static WordGame create(Random random, WordList.Language language) {
+        return create(random, WordList.get(language));
+    }
+
+    public static WordGame create(Random random) {
+        return create(random, WordList.defaultLanguage());
+    }
+
+    public static WordGame create(int width, int height, Random random, WordList wordList) {
+        return new WordGame(random, wordList, width, height);
     }
 
     public boolean tick() {
@@ -264,7 +277,7 @@ public class WordGame {
             int lastPossibleEnd = Math.min(endX, start + MAX_WORD_LENGTH - 1);
             for (int end = firstPossibleStart; end <= lastPossibleEnd; end++) {
                 word += tiles[y][end];
-                score += WordList.getScore(word);
+                score += wordList.getScore(word);
             }
         }
 
@@ -307,7 +320,7 @@ public class WordGame {
             int lastPossibleEnd = Math.max(startY, start - MAX_WORD_LENGTH + 1);
             for (int end = firstPossibleStart; end >= lastPossibleEnd; end--) {
                 word += tiles[end][x];
-                score += WordList.getScore(word);
+                score += wordList.getScore(word);
             }
         }
 
