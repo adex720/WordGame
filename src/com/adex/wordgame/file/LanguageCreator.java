@@ -39,7 +39,7 @@ public class LanguageCreator {
         byte[] encoded = FileCompressor.encode(sb.substring(1).getBytes(StandardCharsets.UTF_8));
 
         try {
-            writeFile(encoded, "resources/languages/" + filename + ".lgn");
+            writeFile(encoded, "resources/languages/" + filename + ".lng");
             System.out.println("Successfully wrote language: " + filename);
         } catch (IOException e) {
             System.out.println("Failed to write file:\n" + e.getMessage() + "\n" + Arrays.toString(e.getStackTrace()));

@@ -55,7 +55,8 @@ public class WordList {
     }
 
     public boolean isWord(String word) {
-        return true;
+        if (WORDS.contains(word)) System.out.println(word);
+        return WORDS.contains(word);
     }
 
     public int getWordScore(String word) {
