@@ -19,15 +19,17 @@ public class LanguageCreator {
     public static void createLanguage(String filename, int minLength, int maxLength, String wordSeparator) {
 
         String[] rawWords;
+        String[] rawLetters;
         try {
             rawWords = new String(DataReader.getFileContent("resources/languages/raw/" + filename + ".txt")).split(wordSeparator);
+            rawLetters = new String(DataReader.getFileContent("resources/languages/raw/" + filename + "_letters.txt")).split("\n");
         } catch (IOException e) {
             System.out.println("Failed to read source file:\n" + e.getMessage() + "\n" + Arrays.toString(e.getStackTrace()));
             return;
         }
 
+        // Filter words
         ArrayList<String> validWords = new ArrayList<>((int) (rawWords.length * 0.8f));
-
         for (String word : rawWords) {
             if (word.length() < minLength || word.length() > maxLength) continue;
 
@@ -36,7 +38,19 @@ public class LanguageCreator {
 
         StringBuilder sb = new StringBuilder();
         for (String word : validWords) sb.append(",").append(word);
-        byte[] encoded = FileCompressor.encode(sb.substring(1).getBytes(StandardCharsets.UTF_8));
+
+        // Read letter data;
+        int letterCount = rawLetters.length;
+        int[] scores = new int[letterCount];
+        int[] frequencies = new int[letterCount];
+
+        for (int i = 0; i < letterCount; i++) {
+            String[] data = rawLetters[i].split(":");
+            scores[i] = Integer.parseInt(data[1]);
+            frequencies[i] = Integer.parseInt(data[2]);
+        }
+
+        byte[] encoded = FileCompressor.encode(sb.substring(1).getBytes(StandardCharsets.UTF_8), scores, frequencies);
 
         try {
             writeFile(encoded, "resources/languages/" + filename + ".lng");

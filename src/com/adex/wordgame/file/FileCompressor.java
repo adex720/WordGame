@@ -8,6 +8,9 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 
+/**
+ * TODO: explain compression
+ */
 public class FileCompressor {
 
     public static final double LN2 = Math.log(2d);
@@ -15,22 +18,27 @@ public class FileCompressor {
     /**
      * Encoded text should only consist of capital letters and words being separated by ",".
      * For non-English characters, see TODO: do this in the UI code
+     *
+     * @param words             String containing all words, separated by a comma
+     * @param letterScores      Array of letter scores; range: 0—15
+     * @param letterFrequencies Array of letter frequencies; range: 0—4095
      */
-    public static byte[] encode(byte[] input) {
-        int length = input.length;
+    public static byte[] encode(byte[] words, int[] letterScores, int[] letterFrequencies) {
+        int length = words.length;
         int differentLetterCount = 1;
         int difference;
         for (int i = 0; i < length; i++) {
-            difference = input[i] - 'A'; // when hitting a comma, this will be negative
-            if (difference >= differentLetterCount) differentLetterCount = difference + 1;
+            difference = words[i] - 'A'; // when hitting a comma, this will be negative
+            if (difference >= differentLetterCount)
+                differentLetterCount = difference + 1;
         }
 
         if ((length & 1) == 1) {
             length += 1;
-            byte[] b = new byte[input.length + 1];
-            System.arraycopy(input, 0, b, 1, input.length);
+            byte[] b = new byte[words.length + 1];
+            System.arraycopy(words, 0, b, 1, words.length);
             b[0] = (byte) ',';
-            input = b;
+            words = b;
         }
 
         LinkedList<Short> toCode = new LinkedList<>();
@@ -41,8 +49,8 @@ public class FileCompressor {
         int first, second;
         short id;
         for (int i = 0; i < length; i += 2) {
-            first = input[i] - 'A';
-            second = input[i + 1] - 'A';
+            first = words[i] - 'A';
+            second = words[i + 1] - 'A';
 
 
             if (first < 0) { // comma
@@ -87,12 +95,23 @@ public class FileCompressor {
 
         ArrayList<Byte> output = new ArrayList<>();
         // Setting the required size a bit higher than the largest possible size to save memory
-        output.ensureCapacity(text.size() + combiantionCount * nodeValueBitLength * nodeValueBitLength * nodeValueBitLength);
+        output.ensureCapacity(text.size() + differentLetterCount *
+                2 + combiantionCount * nodeValueBitLength * nodeValueBitLength * nodeValueBitLength);
 
         // adding letter count and nodeValueBitLength to encoded
         output.add((byte) differentLetterCount);
         output.add((byte) ((nodeValueBitLength >> 8) & 0xFF));
         output.add((byte) (nodeValueBitLength & 0xFF));
+
+        // Add letter scores and frequencies
+        int score, freq;
+        for (int i = 0; i < differentLetterCount - 1; i++) { // -1 because comma is included in letter count
+            score = letterScores[i];
+            freq = letterFrequencies[i];
+
+            output.add((byte) (((score & 0xf) << 4) + ((freq >> 8) & 0xf)));
+            output.add((byte) (freq & 0xff));
+        }
 
         // add tree to encoded
         int i = 0;
@@ -152,9 +171,30 @@ public class FileCompressor {
 
     public static String decode(final byte[] bytes) {
 
+        int differentLetters = bytes[0];
+        int nodeValueBitLength = (bytes[1] << 8) + bytes[2];
+        int combinationCount = differentLetters * differentLetters + 2 * differentLetters;
+        int lettersSquared = differentLetters * differentLetters;
+
+        // Reading letter scores and frequencies
+
+        StringBuilder sb = new StringBuilder();
+        boolean notFirst = false;
+        for (int i = 0; i < differentLetters - 1; i++) {
+            int first = bytes[2 * i + 3];
+            int second = bytes[2 * i + 4];
+
+            if (notFirst) sb.append('.');
+            notFirst = true;
+
+            sb.append((first & 0xf0) >> 4).append(':').append(((0xf & first) << 8) + (0xff & second)); // score : frequency
+        }
+
+        sb.append(','); // Separating from rest
+
         // Creating DataFetcher
         final int[] i = new int[2]; // first is index at byte, second is byte index
-        i[1] = 3;
+        i[1] = 3 + 2 * differentLetters - 2;
         FrequencyTree.DataFetcher data = () -> {
             boolean value = (bytes[i[1]] & (1 << i[0])) >= 1;
             i[0]++;
@@ -165,16 +205,11 @@ public class FileCompressor {
             return value;
         };
 
-        int differentLetters = bytes[0];
-        int nodeValueBitLength = (bytes[1] << 8) + bytes[2];
-        int combinationCount = differentLetters * differentLetters + 2 * differentLetters;
-        int lettersSquared = differentLetters * differentLetters;
-
         FrequencyTree frequencyTree = new FrequencyTree(data, nodeValueBitLength, combinationCount); // Reading tree
         while (!data.getNext()) ; // Skipping empty bits
 
         // Reading text
-        StringBuilder sb = new StringBuilder();
+        StringBuilder text = new StringBuilder(sb);
         char first, second;
         while (i[1] < bytes.length) {
             // Covert id to 2 letters
@@ -191,10 +226,12 @@ public class FileCompressor {
             }
 
             // Add letters to text
-            sb.append(first).append(second);
+            text.append(first).append(second);
         }
 
-        if (sb.charAt(0) == ',') return sb.substring(1);
+        if (text.charAt(0) == ',') sb.append(text.substring(1));
+        else sb.append(text);
+
         return sb.toString();
     }
 }

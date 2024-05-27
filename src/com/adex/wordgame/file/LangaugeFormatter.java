@@ -20,8 +20,8 @@ public class LangaugeFormatter {
 
         ArrayList<String> s2 = new ArrayList<>();
         for (String s : s1) {
-            String s3 = s.split("\t")[1].toLowerCase(Locale.ROOT);
-            if (!s3.matches("^[a-z]+$"))
+            String s3 = s.split("\t")[1].toUpperCase(Locale.ROOT);
+            if (!s3.matches("^[A-Z]+$"))
                 continue;
 
             s2.add("\n" + s3);

@@ -1,15 +1,18 @@
 package com.adex.wordgame;
 
 import com.adex.wordgame.file.DataReader;
+import com.adex.wordgame.util.Pair;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Random;
+import java.util.*;
 
 public class WordList {
 
-    private static HashSet<String> WORDS;
+    private int letterCount;
+
+    private HashSet<String> words;
+    private int[] scores;
+    private int[] frequencies;
+    private int frequenciesSum;
 
     private Language language;
 
@@ -24,9 +27,24 @@ public class WordList {
 
     private void loadWords() {
         try {
-            String[] words = DataReader.getLanguageWords(language.path);
-            WORDS = new HashSet<>(words.length, 1);
-            WORDS.addAll(Arrays.asList(words));
+            Pair<ArrayList<Pair<Integer, Integer>>, String[]> result = DataReader.getLanguageWords(language.path);
+            String[] words = result.second;
+            this.words = new HashSet<>(words.length, 1);
+            this.words.addAll(Arrays.asList(words));
+
+            letterCount = result.first.size();
+            scores = new int[letterCount];
+            frequencies = new int[letterCount];
+
+            frequenciesSum = 0;
+            ArrayList<Pair<Integer, Integer>> data = result.first;
+            int frequency;
+            for (int i = 0; i < letterCount; i++) {
+                scores[i] = data.get(i).first;
+                frequency = data.get(i).second;
+                frequencies[i] = frequency;
+                frequenciesSum += frequency;
+            }
 
         } catch (Exception e) {
             System.out.println("Failed to load language: " + language.name + ":\n" + e.getMessage() + "\n"
@@ -47,8 +65,13 @@ public class WordList {
     }
 
     public char getLetter(Random random) {
-        return new char[]{'q', 'u', 'e'}[random.nextInt(3)];
-        //return (char) ('A' + random.nextInt(26));
+        int x = random.nextInt(frequenciesSum);
+        for (int i = 0; i < letterCount; i++) {
+            x -= frequencies[i];
+            if (x < 0) return (char) (i + 'A');
+        }
+
+        return (char) ('A' + letterCount - 1);
     }
 
     public int getScore(String word) {
@@ -56,20 +79,20 @@ public class WordList {
     }
 
     public boolean isWord(String word) {
-        return WORDS.contains(word);
+        return words.contains(word);
     }
 
     public int getWordScore(String word) {
-        int score = 0;
+        int score = 1;
         for (int c : word.chars().toArray()) {
-            score += getLetterScore((char) c);
+            score *= getLetterScore((char) c);
         }
 
         return score;
     }
 
     public int getLetterScore(char letter) {
-        return 1;
+        return scores[letter - 'A'];
     }
 
     public enum Language {
