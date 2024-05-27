@@ -69,7 +69,7 @@ public class WordGame {
     }
 
     public void createTile() {
-        addTile(Tile.create(random));
+        addTile(Tile.create(random, wordList));
     }
 
     public void addTile(Tile tile) {
