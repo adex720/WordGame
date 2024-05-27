@@ -13,14 +13,14 @@ import java.util.Arrays;
 public class LanguageCreator {
 
     public static void main(String[] args) {
-        createLanguage("english", 4, 12);
+        createLanguage("english", 4, 12, "\r\n");
     }
 
-    public static void createLanguage(String filename, int minLength, int maxLength) {
+    public static void createLanguage(String filename, int minLength, int maxLength, String wordSeparator) {
 
         String[] rawWords;
         try {
-            rawWords = new String(DataReader.getFileContent("resources/languages/raw/" + filename + ".txt")).split("\n");
+            rawWords = new String(DataReader.getFileContent("resources/languages/raw/" + filename + ".txt")).split(wordSeparator);
         } catch (IOException e) {
             System.out.println("Failed to read source file:\n" + e.getMessage() + "\n" + Arrays.toString(e.getStackTrace()));
             return;
