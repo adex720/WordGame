@@ -49,7 +49,7 @@ public class Tile {
     }
 
     public static Tile create(Random random, WordList wordList) {
-        return create(wordList.get4Letters(random), random.nextInt(6));
+        return create(wordList.get4Letters(random), random.nextInt(7));
     }
 
     public static Tile create(Random random) {
