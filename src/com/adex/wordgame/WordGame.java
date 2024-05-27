@@ -205,7 +205,7 @@ public class WordGame {
             int startY = tileStart;
             while (startY > 0 && tiles[startY - 1][x] != ' ') startY--;
             int endY = tileEnd;
-            while (endY < height - 1 && tiles[startY + 1][x] != ' ') endY++;
+            while (endY < height - 1 && tiles[endY + 1][x] != ' ') endY++;
 
             // Add score
             score += calculateColumnScore(x, startY, endY, tileStart, tileEnd);
@@ -312,7 +312,7 @@ public class WordGame {
 
             // Index at which the words contain a letter from the current tile and is long enough
             int firstPossibleStart = Math.min(tileStart, start - MIN_WORD_LENGTH + 1);
-            for (int i = start; i > firstPossibleStart - 1; i--) {
+            for (int i = start; i > firstPossibleStart; i--) {
                 word += tiles[i][x];
             }
 

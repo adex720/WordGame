@@ -56,7 +56,6 @@ public class WordList {
     }
 
     public boolean isWord(String word) {
-        if (WORDS.contains(word)) System.out.println(word);
         return WORDS.contains(word);
     }
 
