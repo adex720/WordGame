@@ -11,7 +11,7 @@ public class DataReader {
     }
 
     public static String[] getLanguageWords(String language) throws IOException {
-        return new String(FileCompressor.encode(getFileContent("resources/languages/" + language + ".lng"))).split(",");
+        return FileCompressor.decode(getFileContent("resources/languages/" + language + ".lng")).split(",");
     }
 
 }
