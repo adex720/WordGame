@@ -98,6 +98,9 @@ public class FileCompressor {
         output.ensureCapacity(text.size() + differentLetterCount *
                 2 + combiantionCount * nodeValueBitLength * nodeValueBitLength * nodeValueBitLength);
 
+        // Adding encoding version to data
+        output.add((byte) 1);
+
         // adding letter count and nodeValueBitLength to encoded
         output.add((byte) differentLetterCount);
         output.add((byte) ((nodeValueBitLength >> 8) & 0xFF));
@@ -105,7 +108,7 @@ public class FileCompressor {
 
         // Add letter scores and frequencies
         int score, freq;
-        for (int i = 0; i < differentLetterCount - 1; i++) { // -1 because comma is included in letter count
+        for (int i = 0; i < differentLetterCount; i++) { // comma is not counted as a letter
             score = letterScores[i];
             freq = letterFrequencies[i];
 
@@ -171,18 +174,24 @@ public class FileCompressor {
 
     public static String decode(final byte[] bytes) {
 
-        int differentLetters = bytes[0];
-        int nodeValueBitLength = (bytes[1] << 8) + bytes[2];
-        int combinationCount = differentLetters * differentLetters + 2 * differentLetters;
+        int version = bytes[0];
+
+        if (version != 1) {
+            throw new IllegalArgumentException("Encoding version " + version + " is not supported!");
+        }
+
+        int differentLetters = bytes[1];
+        int nodeValueBitLength = (bytes[2] << 8) + bytes[3];
         int lettersSquared = differentLetters * differentLetters;
+        int combinationCount = lettersSquared + 2 * differentLetters;
 
         // Reading letter scores and frequencies
 
         StringBuilder sb = new StringBuilder();
         boolean notFirst = false;
-        for (int i = 0; i < differentLetters - 1; i++) {
-            int first = bytes[2 * i + 3];
-            int second = bytes[2 * i + 4];
+        for (int i = 0; i < differentLetters; i++) {
+            int first = bytes[2 * i + 4];
+            int second = bytes[2 * i + 5];
 
             if (notFirst) sb.append('.');
             notFirst = true;
@@ -194,7 +203,7 @@ public class FileCompressor {
 
         // Creating DataFetcher
         final int[] i = new int[2]; // first is index at byte, second is byte index
-        i[1] = 3 + 2 * differentLetters - 2;
+        i[1] = 4 + 2 * differentLetters;
         FrequencyTree.DataFetcher data = () -> {
             boolean value = (bytes[i[1]] & (1 << i[0])) >= 1;
             i[0]++;
